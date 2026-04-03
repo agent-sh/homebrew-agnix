@@ -1,0 +1,27 @@
+name: Notify Tap on Release
+
+# This workflow goes in the MAIN agnix repo (agent-sh/agnix)
+# It dispatches to the tap repo when a new release is published.
+# ---
+# To install: copy this file to agent-sh/agnix/.github/workflows/notify-tap.yml
+# and add a PAT secret named TAP_DISPATCH_TOKEN with repo scope.
+# ---
+# Keeping it here as reference. The tap's update-formula.yml also supports
+# workflow_dispatch for manual triggers.
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch to tap
+        env:
+          GH_TOKEN: ${{ secrets.TAP_DISPATCH_TOKEN }}
+        run: |
+          gh api repos/agent-sh/homebrew-agnix/dispatches \
+            --method POST \
+            -f event_type=release-published \
+            -f 'client_payload[tag]=${{ github.event.release.tag_name }}'
