@@ -18,4 +18,5 @@ brew upgrade agnix
 
 ## How it works
 
-The formula is automatically updated when a new agnix release is published via GitHub Actions.
+The agnix release workflow opens a formula update pull request for each new
+release. The formula changes land after review and CI.
