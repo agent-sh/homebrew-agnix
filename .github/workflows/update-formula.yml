@@ -1,60 +1,33 @@
-name: Update Formula on Release
+name: Verify Formula for Release
 
 on:
-  repository_dispatch:
-    types: [release-published]
   workflow_dispatch:
     inputs:
       tag:
-        description: "Release tag (e.g. v0.19.0)"
-        required: false
+        description: Release tag to verify, such as v0.55.0
+        required: true
+
+permissions:
+  contents: read
 
 jobs:
-  update:
+  verify:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
 
-      - name: Get latest release
-        id: release
+      - name: Compare formula to release archive
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
         run: |
-          if [ -n "${{ github.event.inputs.tag }}" ]; then
-            TAG="${{ github.event.inputs.tag }}"
-          elif [ -n "${{ github.event.client_payload.tag }}" ]; then
-            TAG="${{ github.event.client_payload.tag }}"
-          else
-            TAG=$(gh api repos/agent-sh/agnix/releases/latest --jq '.tag_name')
+          set -euo pipefail
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid release tag: $TAG" >&2
+            exit 1
           fi
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
 
-      - name: Compute SHA256
-        id: sha
-        run: |
-          TAG="${{ steps.release.outputs.tag }}"
-          SHA=$(curl -sL "https://github.com/agent-sh/agnix/archive/refs/tags/${TAG}.tar.gz" | shasum -a 256 | awk '{print $1}')
-          echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
-
-      - name: Update formula
-        run: |
-          TAG="${{ steps.release.outputs.tag }}"
-          SHA="${{ steps.sha.outputs.sha256 }}"
-          sed -i "s|url \".*\"|url \"https://github.com/agent-sh/agnix/archive/refs/tags/${TAG}.tar.gz\"|" Formula/agnix.rb
-          sed -i "s|sha256 \".*\"|sha256 \"${SHA}\"|" Formula/agnix.rb
-
-      - name: Commit and push
-        run: |
-          TAG="${{ steps.release.outputs.tag }}"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add Formula/agnix.rb
-          if git diff --cached --quiet; then
-            echo "No changes to commit"
-            exit 0
-          fi
-          git commit -m "Update agnix to ${TAG}"
-          git push
+          URL="https://github.com/agent-sh/agnix/archive/refs/tags/${TAG}.tar.gz"
+          SHA="$(curl -fsSL --retry 3 "$URL" | sha256sum | awk '{print $1}')"
+          grep -Fqx "  url \"$URL\"" Formula/agnix.rb
+          grep -Fqx "  sha256 \"$SHA\"" Formula/agnix.rb
+          echo "Formula matches ${TAG} and its source archive SHA-256"
