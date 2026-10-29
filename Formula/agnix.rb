@@ -1,8 +1,8 @@
 class Agnix < Formula
   desc "Lint AI agent configuration files"
   homepage "https://github.com/agent-sh/agnix"
-  url "https://github.com/agent-sh/agnix/archive/refs/tags/v0.60.0.tar.gz"
-  sha256 "f106e71aac84dfe6efc366bf3b22cb0c99124f9c5025b06ae9930d289758b2eb"
+  url "https://github.com/agent-sh/agnix/archive/refs/tags/v0.60.1.tar.gz"
+  sha256 "71503fac5c9943128f27a55b2747fd460e4cbadfbee3fd4dd3534dcfeb8014b8"
   license any_of: ["MIT", "Apache-2.0"]
   head "https://github.com/agent-sh/agnix.git", branch: "main"
 
