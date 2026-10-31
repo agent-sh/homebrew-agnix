@@ -1,6 +1,6 @@
 # homebrew-agnix
 
-Homebrew tap for [agnix](https://github.com/agent-sh/agnix) — AI agent configuration linter.
+Homebrew tap for [agnix](https://github.com/agent-sh/agnix): AI agent configuration linter.
 
 ## Install
 
