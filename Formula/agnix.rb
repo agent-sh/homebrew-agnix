@@ -16,11 +16,13 @@ class Agnix < Formula
     (testpath/"SKILL.md").write <<~EOS
       ---
       name: Test-Skill
+      description: Use when testing skill name validation.
       ---
       Test body
     EOS
 
-    output = shell_output("#{bin}/agnix #{testpath}", 1)
-    assert_match "Invalid name", output
+    output = shell_output("#{bin}/agnix --format json .", 1)
+    diagnostics = JSON.parse(output).fetch("diagnostics")
+    assert_includes diagnostics.map { |diagnostic| diagnostic.fetch("rule") }, "AS-004"
   end
 end
